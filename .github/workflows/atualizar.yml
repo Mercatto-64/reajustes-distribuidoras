@@ -1,0 +1,57 @@
+# Gera a página com os dados mais recentes da ANEEL e do IBGE e publica no GitHub Pages.
+# Roda toda segunda às 7h (Brasília), a cada alteração enviada ao repositório
+# e quando alguém clicar em "Run workflow" na aba Actions.
+# Se algo falhar (ANEEL fora do ar, dados estranhos), a página antiga continua no ar
+# e o GitHub manda um e-mail avisando.
+name: Atualizar página
+
+on:
+  schedule:
+    - cron: '0 10 * * 1'   # 10h UTC = 7h em Brasília
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  actions: write   # para manter a rotina semanal ligada (ver o último passo)
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  gerar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Gerar a página
+        shell: pwsh
+        run: ./gerar.ps1 -Saida _site
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  publicar:
+    needs: gerar
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
+
+      # O GitHub desliga rotinas agendadas de repositórios sem alterações há 60 dias.
+      # Este passo religa a rotina a cada execução, para ela nunca parar sozinha.
+      - name: Manter a rotina semanal ligada
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --method PUT "repos/${{ github.repository }}/actions/workflows/atualizar.yml/enable"
