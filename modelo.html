@@ -1,0 +1,830 @@
+<!doctype html>
+<html lang="pt-BR">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reajustes das Distribuidoras</title>
+<meta name="description" content="Reajustes da TUSD e da TE das distribuidoras de energia nos últimos 5 anos, comparados ao IPCA. Tarifas A4 verde, dados da ANEEL.">
+<link rel="icon" href="assets/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* Layout: relatório em coluna única (até 1000px), como as páginas de referência da Mercatto: faixa da marca, tese, números e painéis numerados.
+     Cor: a TUSD (rede) é sempre a cor forte; a TE (energia) fica em tom neutro; o IPCA é tracejado. */
+  :root {
+    --ground: #f4efec; --surface: #fdfbfa; --ink: #2a2547; --ink-2: #5d5878; --ink-3: #918ca6;
+    --rule: #e7dfdb; --axis: #cbc2c6; --chip: #efe8e5;
+    --tusd: #c0603f; --tusd-soft: rgba(192,96,63,.12); --te: #bdb6d6; --on-tusd: #ffffff; --on-te: #2a2547;
+    --ipca: #2a2547; --brand: #3a3660; --sel: #f8e7e0; --baixa: #3f7d68;
+    --banner: linear-gradient(100deg, #f1e4de 0%, #ead9e0 45%, #d4c8f0 100%);
+    --shadow: 0 1px 2px rgba(42,37,71,.06), 0 10px 28px -20px rgba(42,37,71,.45);
+    --f-display: "Figtree", "Segoe UI", Arial, sans-serif;
+    --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    --f-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --ground: #15132a; --surface: #1e1b36; --ink: #f1eff8; --ink-2: #c4c0d8; --ink-3: #8d89a6;
+      --rule: #2f2b4b; --axis: #4a4568; --chip: #29254a;
+      --tusd: #e3825f; --tusd-soft: rgba(227,130,95,.16); --te: #5c5785; --on-tusd: #1a1426; --on-te: #f1eff8;
+      --ipca: #e6e3f2; --brand: #c9c3ee; --sel: #3b2a33; --baixa: #6cc1a4;
+      --banner: linear-gradient(100deg, #2b2240 0%, #2d2547 45%, #3b3266 100%);
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 28px -20px rgba(0,0,0,.9);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --ground: #15132a; --surface: #1e1b36; --ink: #f1eff8; --ink-2: #c4c0d8; --ink-3: #8d89a6;
+    --rule: #2f2b4b; --axis: #4a4568; --chip: #29254a;
+    --tusd: #e3825f; --tusd-soft: rgba(227,130,95,.16); --te: #5c5785; --on-tusd: #1a1426; --on-te: #f1eff8;
+    --ipca: #e6e3f2; --brand: #c9c3ee; --sel: #3b2a33; --baixa: #6cc1a4;
+    --banner: linear-gradient(100deg, #2b2240 0%, #2d2547 45%, #3b3266 100%);
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 28px -20px rgba(0,0,0,.9);
+  }
+
+  body { background: var(--ground); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.55; -webkit-font-smoothing: antialiased;
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .page { max-width: 1000px; margin: 0 auto; padding-block: 28px 56px; display: flex; flex-direction: column; gap: 28px; }
+
+  /* Faixa da marca */
+  .banner { background: var(--banner); border: 1px solid var(--rule); border-radius: 3px; padding: 14px 22px; display: flex; align-items: center; justify-content: space-between; gap: 12px 20px; flex-wrap: wrap; }
+  .logo { height: 46px; width: auto; display: block; }
+  .logo-escuro { display: none; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .logo-claro { display: none; } :root:not([data-theme="light"]) .logo-escuro { display: block; } }
+  :root[data-theme="dark"] .logo-claro { display: none; } :root[data-theme="dark"] .logo-escuro { display: block; }
+  .tagline { font-family: var(--f-display); font-weight: 600; font-size: 14px; color: var(--brand); }
+
+  /* Controles */
+  .controls { display: flex; gap: 10px 12px; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; }
+  .field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .field label, .seg-l { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); }
+  select { font: 600 14px var(--f-body); color: var(--ink); background-color: var(--surface); border: 1px solid var(--axis); border-radius: 3px;
+    padding: 8px 32px 8px 11px; max-width: 100%; cursor: pointer; appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--ink-2) 50%), linear-gradient(135deg, var(--ink-2) 50%, transparent 50%);
+    background-position: calc(100% - 16px) 55%, calc(100% - 11px) 55%; background-size: 5px 5px; background-repeat: no-repeat; }
+  #dist { min-width: 260px; }
+  select:focus-visible, button:focus-visible { outline: 2px solid var(--tusd); outline-offset: 2px; }
+  .btns { display: flex; gap: 8px; }
+  button { font: 600 13.5px var(--f-body); border-radius: 3px; padding: 9px 14px; cursor: pointer; border: 1px solid var(--ink); display: inline-flex; align-items: center; gap: 7px; }
+  .b-pri { background: var(--ink); color: var(--surface); }
+  .b-sec { background: transparent; color: var(--ink); }
+  button:hover { filter: brightness(1.1); }
+  button:disabled { opacity: .55; cursor: progress; }
+  button svg { width: 15px; height: 15px; }
+  .status { font-size: 13px; color: var(--ink-2); margin: 0; min-height: 1.2em; flex-basis: 100%; text-align: right; }
+  .status:empty { display: none; }
+
+  /* Abertura */
+  .eyebrow { font-family: var(--f-mono); font-size: 11.5px; letter-spacing: .13em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 10px; }
+  h1 { font-family: var(--f-display); font-weight: 700; font-size: clamp(30px, 4.4vw, 44px); line-height: 1.08; letter-spacing: -.02em; margin: 0; text-wrap: balance; }
+  h1 em { font-style: normal; color: var(--tusd); }
+  .deck { margin: 12px 0 0; max-width: 72ch; color: var(--ink-2); font-size: 16px; }
+  .deck b { color: var(--ink); font-weight: 600; }
+  .deck .t { color: var(--tusd); font-weight: 600; }
+
+  /* Faixa de números */
+  .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 3px; overflow: hidden; }
+  .stat { background: var(--surface); padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .stat .k { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); }
+  .stat .v { font-family: var(--f-display); font-weight: 700; font-size: 34px; line-height: 1; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .stat .n { font-size: 12.5px; color: var(--ink-2); }
+  .stat.tusd .v { color: var(--tusd); }
+  .stat { border-top: 3px solid var(--surface); }
+  .stat.tusd { border-top-color: var(--tusd); }
+  .key { display: inline-block; width: 18px; height: 4px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+
+  /* Painéis */
+  .panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 3px; box-shadow: var(--shadow); padding: 22px 24px 20px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .panel-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 20px; }
+  h2 { font-family: var(--f-display); font-weight: 600; font-size: 18px; letter-spacing: -.01em; margin: 0; text-wrap: balance; }
+  .unit { font-family: var(--f-mono); font-weight: 400; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); margin-left: 6px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 12.5px; color: var(--ink-2); }
+  .legend span { white-space: nowrap; display: inline-flex; align-items: center; }
+  .sw { display: inline-block; width: 14px; height: 11px; margin-right: 6px; border-radius: 1px; }
+  .sw.dash { background: transparent; border: 1.6px dashed var(--ipca); }
+  .caption { margin: 0; font-size: 13px; color: var(--ink-2); max-width: 82ch; }
+  .caption b { color: var(--ink); font-weight: 600; }
+  .seg { display: inline-flex; border: 1px solid var(--axis); border-radius: 3px; overflow: hidden; }
+  .seg button { border: 0; border-radius: 0; background: transparent; color: var(--ink-2); padding: 6px 11px; font-size: 12.5px; font-weight: 500; }
+  .seg button + button { border-left: 1px solid var(--axis); }
+  .seg button[aria-pressed="true"] { background: var(--tusd); color: var(--on-tusd); font-weight: 600; }
+  .seg-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+  .chart-wrap { overflow-x: auto; }
+  svg.chart { display: block; width: 100%; height: auto; min-width: 640px; }
+  svg.chart text { font-family: var(--f-mono); }
+
+  /* Tabela */
+  .tbl-wrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 720px; font-variant-numeric: tabular-nums; }
+  th, td { padding: 9px 12px; text-align: right; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+  th:nth-child(-n+2), td:nth-child(-n+2) { text-align: left; }
+  td:first-child { font-family: var(--f-mono); font-size: 13px; }
+  thead th { font-family: var(--f-mono); font-weight: 400; font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-3); border-bottom: 1px solid var(--axis); vertical-align: bottom; }
+  thead th.tusd { color: var(--tusd); font-weight: 500; }
+  td.tusd { background: var(--tusd-soft); }
+  td.reh { color: var(--ink-2); font-size: 13px; }
+  tr.base td { color: var(--ink-3); }
+  tbody tr:last-child td { border-bottom: none; font-weight: 600; }
+  tbody tr:last-child { background: var(--chip); }
+  .neg { color: var(--baixa); }
+
+  /* Comparação */
+  .cmp-ctrl { display: flex; gap: 10px; flex-wrap: wrap; }
+  .cmp-pos { font-size: 14px; color: var(--ink-2); margin: 0; }
+  .cmp-pos b { color: var(--tusd); }
+  .cmp-list { display: flex; flex-direction: column; gap: 2px; max-height: 560px; overflow-y: auto; padding-right: 4px; position: relative; }
+  .cmp-row { display: grid; grid-template-columns: minmax(110px, 200px) minmax(0, 1fr) 64px; gap: 12px; align-items: center; font-size: 13px; padding: 3px 6px; border-radius: 2px; }
+  .cmp-row .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink-2); text-align: right; }
+  .cmp-row .vl { font-family: var(--f-mono); font-size: 12px; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+  .cmp-track { position: relative; height: 16px; }
+  .cmp-track .b { position: absolute; top: 2px; height: 12px; border-radius: 1px; background: var(--te); }
+  .cmp-track .ip { position: absolute; top: -3px; bottom: -3px; width: 0; border-left: 1.6px dashed var(--ipca); }
+  .cmp-track .z { position: absolute; top: -3px; bottom: -3px; width: 0; border-left: 1px solid var(--axis); }
+  .cmp-row.sel { background: var(--sel); }
+  .cmp-row.sel .nm, .cmp-row.sel .vl { color: var(--ink); font-weight: 600; }
+  .cmp-row.sel .b { background: var(--tusd); }
+  .cmp-mais { display: none; font-size: 13px; color: var(--ink-3); margin: 0; }
+
+  footer { border-top: 1px solid var(--rule); padding-top: 16px; font-size: 12px; color: var(--ink-3); display: flex; flex-direction: column; gap: 6px; }
+  footer b { color: var(--ink-2); font-weight: 600; }
+  .erro { border: 1px solid var(--tusd); color: var(--tusd); border-radius: 3px; padding: 14px 16px; background: var(--surface); }
+
+  /* Modo de exportação (PDF) */
+  .exportando .page { width: 1000px; max-width: none; }
+  .exportando [data-no-pdf] { display: none !important; }
+  .exportando .cmp-list { max-height: none; overflow: visible; }
+  .exportando .cmp-row.extra { display: none; }
+  .exportando .cmp-mais { display: block; }
+  .exportando .panel { box-shadow: none; }
+  .exportando svg.chart { min-width: 0; }
+
+  @media (max-width: 760px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 480px) {
+    .stats { grid-template-columns: minmax(0, 1fr); }
+    .panel { padding: 18px 16px; }
+    #dist { min-width: 0; width: 100%; }
+    .field, .btns { width: 100%; } .btns button { flex: 1; justify-content: center; }
+    .tagline { display: none; }
+    .cmp-row { grid-template-columns: minmax(0, 96px) minmax(0, 1fr) 52px; gap: 8px; }
+  }
+</style>
+
+<div class="page">
+  <div class="banner" data-pdf>
+    <img class="logo logo-claro" src="assets/logo.png" alt="Mercatto Gestão">
+    <img class="logo logo-escuro" src="assets/logo-branco-h.png" alt="Mercatto Gestão">
+    <span class="tagline">Inteligência para decisões em energia.</span>
+  </div>
+
+  <div class="controls" data-no-pdf>
+    <div class="field"><label for="dist">Distribuidora</label><select id="dist"></select></div>
+    <div class="btns">
+      <button class="b-sec" id="b-pdf" type="button"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8 2v8m0 0 3-3m-3 3L5 7M3 12.5h10"/></svg>Baixar PDF</button>
+      <button class="b-pri" id="b-ppt" type="button"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8 2v8m0 0 3-3m-3 3L5 7M3 12.5h10"/></svg>Baixar PowerPoint</button>
+    </div>
+    <p class="status" id="status" aria-live="polite"></p>
+  </div>
+
+  <section data-pdf>
+    <p class="eyebrow" id="eyebrow">A4 verde · TUSD, TE e IPCA</p>
+    <h1 id="titulo">Carregando as tarifas…</h1>
+    <p class="deck" id="deck"></p>
+  </section>
+
+  <div id="conteudo" hidden style="display:flex;flex-direction:column;gap:28px">
+    <section class="stats" id="stats" data-pdf></section>
+
+    <section class="panel" data-pdf>
+      <div class="panel-head">
+        <h2>1 · TUSD × IPCA, reajuste a reajuste <span class="unit" id="u-1"></span></h2>
+        <div class="legend"><span><i class="sw" style="background:var(--tusd)"></i>TUSD</span><span><i class="sw" style="background:var(--te)"></i>TE</span><span><i class="sw dash"></i>IPCA</span></div>
+      </div>
+      <div class="seg-row" data-no-pdf>
+        <span class="seg-l">Componente</span>
+        <div class="seg" id="seg-1" role="group" aria-label="Componente do gráfico 1">
+          <button type="button" data-k="fp" aria-pressed="true">Energia fora ponta</button>
+          <button type="button" data-k="p" aria-pressed="false">Energia na ponta</button>
+          <button type="button" data-k="d" aria-pressed="false">Demanda</button>
+        </div>
+      </div>
+      <div class="chart-wrap"><svg class="chart" id="ch-1" viewBox="0 0 920 390" role="img" aria-label="TUSD e TE acumuladas contra o IPCA a cada resolução"></svg></div>
+      <p class="caption" id="cap-1"></p>
+    </section>
+
+    <section class="panel" data-pdf>
+      <div class="panel-head">
+        <h2>2 · O que subiu em 5 anos <span class="unit">variação acumulada</span></h2>
+        <div class="legend"><span><i class="sw" style="background:var(--tusd)"></i>TUSD (rede)</span><span><i class="sw" style="background:var(--te)"></i>TE (energia)</span><span><i class="sw dash"></i>IPCA</span></div>
+      </div>
+      <div class="chart-wrap"><svg class="chart" id="ch-2" viewBox="0 0 920 330" role="img" aria-label="Variação em 5 anos de cada componente contra o IPCA"></svg></div>
+      <p class="caption">Tracejado = inflação. Quanto mais à direita dele, mais o componente subiu acima do IPCA.</p>
+    </section>
+
+    <section class="panel" data-pdf>
+      <div class="panel-head">
+        <h2>3 · Quem pesa mais na energia fora ponta <span class="unit">TE × TUSD</span></h2>
+        <div class="legend"><span><i class="sw" style="background:var(--te)"></i>TE</span><span><i class="sw" style="background:var(--tusd)"></i>TUSD</span></div>
+      </div>
+      <div class="chart-wrap"><svg class="chart" id="ch-3" viewBox="0 0 920 170" role="img" aria-label="Composição da energia fora ponta entre TE e TUSD"></svg></div>
+      <p class="caption"><b>TE</b> é a energia, que pode ser comprada no mercado livre. <b>TUSD</b> é o uso da rede e continua sendo paga à distribuidora.</p>
+    </section>
+
+    <section class="panel" data-pdf>
+      <div class="panel-head">
+        <h2>4 · Ano a ano <span class="unit">R$/MWh · fora ponta</span></h2>
+        <div class="legend"><span><i class="sw" style="background:var(--te)"></i>TE</span><span><i class="sw" style="background:var(--tusd)"></i>TUSD</span></div>
+      </div>
+      <div class="chart-wrap"><svg class="chart" id="ch-4" viewBox="0 0 920 380" role="img" aria-label="TE e TUSD fora ponta em cada aniversário da janela"></svg></div>
+      <p class="caption">Tarifa vigente na data de cada aniversário da janela de 5 anos. Embaixo, quanto a TUSD mudou no ano.</p>
+    </section>
+
+    <section class="panel" data-pdf>
+      <div class="panel-head"><h2>5 · Cada resolução no período <span class="unit">variação sobre a tarifa anterior</span></h2></div>
+      <div class="tbl-wrap"><table id="tb"></table></div>
+      <p class="caption" id="cap-5"></p>
+    </section>
+
+    <section class="panel" data-pdf>
+      <div class="panel-head"><h2>6 · Comparação com outras distribuidoras <span class="unit" id="u-6"></span></h2></div>
+      <div class="cmp-ctrl" data-no-pdf>
+        <div class="field"><label for="metrica">Componente</label><select id="metrica"></select></div>
+        <div class="field"><label for="escopo">Comparar com</label><select id="escopo">
+          <option value="regiao">Mesma região</option>
+          <option value="brasil">Brasil</option>
+          <option value="principais">Principais distribuidoras</option>
+        </select></div>
+      </div>
+      <p class="cmp-pos" id="cmp-pos"></p>
+      <div class="cmp-list" id="cmp-list"></div>
+      <p class="cmp-mais" id="cmp-mais"></p>
+      <p class="caption">Tracejado = IPCA do período. Só entram distribuidoras com os 5 anos completos de tarifa.</p>
+    </section>
+
+    <footer id="rodape" data-pdf></footer>
+  </div>
+</div>
+
+<script type="application/json" id="dados-json">__DADOS__</script>
+<script>
+(() => {
+  'use strict';
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+  const MESES_LONGOS = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+  const nf = (d) => new Intl.NumberFormat('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
+  const num = (v, d = 0) => nf(d).format(v);
+  const pct = (v, d = 1) => (v > 0.00005 ? '+' : v < -0.00005 ? '−' : '') + nf(d).format(Math.abs(v * 100)) + '%';
+  const abs0 = (v) => nf(0).format(Math.abs(v * 100)) + '%';
+  const dataBr = (s) => s.slice(8, 10) + '/' + s.slice(5, 7) + '/' + s.slice(0, 4);
+  const mesAno = (s) => MESES[+s.slice(5, 7) - 1] + '/' + s.slice(2, 4);
+  const slug = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const cor = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  const status = (t) => { $('#status').textContent = t || ''; };
+
+  // v = [demanda TUSD, demanda TE, ponta TUSD, ponta TE, fora ponta TUSD, fora ponta TE]
+  const POSTOS = {
+    fp: { nome: 'Energia fora ponta', tusd: (v) => v[4], te: (v) => v[5], un: 'R$/MWh', dec: 0 },
+    p: { nome: 'Energia na ponta', tusd: (v) => v[2], te: (v) => v[3], un: 'R$/MWh', dec: 0 },
+    d: { nome: 'Demanda', tusd: (v) => v[0], te: (v) => v[1], un: 'R$/kW', dec: 2 },
+  };
+  // Itens do gráfico 2 e da comparação. tipo: tusd = cor forte, te = neutra
+  const ITENS = [
+    { k: 'tfp', nome: 'TUSD fora ponta', det: 'R$/MWh', tipo: 'tusd', f: (v) => v[4], dec: 0 },
+    { k: 'tp', nome: 'TUSD ponta', det: 'R$/MWh', tipo: 'tusd', f: (v) => v[2], dec: 0 },
+    { k: 'td', nome: 'Demanda (TUSD)', det: 'R$/kW', tipo: 'tusd', f: (v) => v[0] + v[1], dec: 2 },
+    { k: 'efp', nome: 'TE fora ponta', det: 'R$/MWh', tipo: 'te', f: (v) => v[5], dec: 0 },
+    { k: 'ep', nome: 'TE ponta', det: 'R$/MWh', tipo: 'te', f: (v) => v[3], dec: 0 },
+  ];
+
+  let D = null, dist = null, ipca = null, posto1 = 'fp';
+
+  // ---------- IPCA ----------
+  function addMes(ym, n) {
+    let y = +ym.slice(0, 4), m = +ym.slice(5, 7) + n;
+    y += Math.floor((m - 1) / 12); m = ((m - 1) % 12 + 12) % 12 + 1;
+    return y + '-' + String(m).padStart(2, '0');
+  }
+  function prepIpca() {
+    const mapa = new Map(D.ipca);
+    const ultimo = D.ipca[D.ipca.length - 1][0];
+    const base = addMes(ultimo, -D.anos * 12);
+    const ib = mapa.get(base);
+    const ate = (s) => { let ym = addMes(s.slice(0, 7), -1); if (ym > ultimo) ym = ultimo; if (ym < base) ym = base; return mapa.get(ym) / ib - 1; };
+    return { base, ultimo, total: mapa.get(ultimo) / ib - 1, ate, rotulo: mesAno(addMes(base, 1) + '-01') + ' a ' + mesAno(ultimo + '-01') };
+  }
+
+  // ---------- Cálculos ----------
+  const ini = () => dist.passos[0];
+  const fim = () => dist.passos[dist.passos.length - 1];
+  const vigenteEm = (d, s) => { let r = null; for (const p of d.passos) if (p.d <= s) r = p; return r; };
+  const variacao = (d, f) => { const a = f(d.passos[0].v), b = f(d.passos[d.passos.length - 1].v); return a > 0 ? b / a - 1 : null; };
+  const real = (v) => (1 + v) / (1 + ipca.total) - 1;
+  const frase = (v) => (Math.abs(real(v)) < 0.0005 ? 'igual ao IPCA' : nf(0).format(Math.abs(real(v) * 100)) + '% ' + (real(v) > 0 ? 'acima' : 'abaixo') + ' do IPCA');
+  function aniversarios() {
+    const out = [];
+    for (let k = 0; k <= D.anos; k++) out.push((+D.inicio.slice(0, 4) + k) + D.inicio.slice(4));
+    out[out.length - 1] = D.fim;
+    return out;
+  }
+  function escala(min, max, alvo) {
+    const bruto = (max - min) / alvo, passos = [0.02, 0.05, 0.1, 0.2, 0.25, 0.5, 1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000];
+    const p = passos.find((x) => x >= bruto) || bruto;
+    return { p, lo: Math.floor(min / p) * p, hi: Math.ceil(max / p) * p };
+  }
+  function el(tag, attrs, txt) {
+    const e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (txt != null) e.textContent = txt;
+    return e;
+  }
+  const tip = (e, t) => { e.append(el('title', {}, t)); return e; };
+
+  // ---------- Página ----------
+  function render() {
+    if (!D || !dist) return;
+    const a = ini(), b = fim();
+    const vT = b.v[4] / a.v[4] - 1, vE = b.v[5] / a.v[5] - 1;
+    const h1 = $('#titulo'); h1.textContent = dist.nome + ': a TUSD ' + (vT >= 0 ? 'subiu ' : 'caiu ');
+    const em = document.createElement('em'); em.textContent = abs0(vT); h1.append(em, ' em ' + D.anos + ' anos');
+    $('#eyebrow').textContent = dist.nome + ' · A4 verde · TUSD, TE e IPCA' + (dist.uf ? ' · ' + dist.uf : '');
+    $('#deck').innerHTML = 'Na energia fora ponta, a parte de rede (<span class="t">TUSD</span>) foi de R$ ' + num(a.v[4]) + ' para <b>R$ ' + num(b.v[4]) +
+      '/MWh</b> (' + pct(vT, 0) + '), enquanto a energia (TE) variou ' + pct(vE, 0) + ' e o IPCA ' + pct(ipca.total, 0) +
+      '. Tarifa vigente em ' + dataBr(D.inicio) + ' contra a de hoje, sem impostos.';
+    document.title = 'Reajustes ' + dist.nome;
+
+    // Números
+    const cel = (k, v, n, cls) => '<div class="stat ' + (cls || '') + '"><span class="k">' + k + '</span><span class="v">' + v + '</span><span class="n">' + n + '</span></div>';
+    const per = mesAno(D.inicio) + '→' + mesAno(D.fim);
+    const vTp = b.v[2] / a.v[2] - 1, vD = (b.v[0] + b.v[1]) / (a.v[0] + a.v[1]) - 1;
+    $('#stats').innerHTML =
+      cel('<i class="key" style="background:var(--tusd)"></i>TUSD fora ponta · ' + per, pct(vT, 0), 'R$ ' + num(a.v[4]) + ' → R$ ' + num(b.v[4]) + '/MWh · ' + frase(vT), 'tusd') +
+      cel('<i class="key" style="background:var(--tusd)"></i>TUSD ponta · mesmo período', pct(vTp, 0), 'R$ ' + num(a.v[2]) + ' → R$ ' + num(b.v[2]) + '/MWh · ' + frase(vTp), 'tusd') +
+      cel('<i class="key" style="background:var(--tusd)"></i>Demanda (TUSD) · mesmo período', pct(vD, 0), 'R$ ' + num(a.v[0] + a.v[1], 2) + ' → R$ ' + num(b.v[0] + b.v[1], 2) + '/kW · ' + frase(vD), 'tusd') +
+      cel('<i class="key" style="background:var(--te)"></i>TE fora ponta · IPCA', pct(vE, 0) + ' <span style="color:var(--ink-3);font-size:22px">· ' + pct(ipca.total, 0) + '</span>',
+        'energia: R$ ' + num(a.v[5]) + ' → R$ ' + num(b.v[5]) + '/MWh · IPCA ' + esc(ipca.rotulo));
+
+    grafico1(); grafico2(); grafico3(); grafico4(); tabela(); comparacao();
+
+    $('#rodape').innerHTML =
+      '<span><b>Fontes:</b> ANEEL, base "Tarifas de Aplicação das Distribuidoras de Energia Elétrica" (dados abertos, gerada em ' + dataBr(D.baseAneel) +
+      '), subgrupo A4, modalidade verde, tarifa de aplicação sem impostos · IBGE/SIDRA, tabela 1737 (IPCA ' + esc(ipca.rotulo) + ').</span>' +
+      '<span>Janela móvel de ' + D.anos + ' anos: tarifa vigente em ' + dataBr(D.inicio) + ' contra a vigente em ' + dataBr(D.fim) + '. Agente ANEEL: ' +
+      esc(dist.agentes.join(', ')) + '. Atualizado em ' + dataBr(D.gerado.slice(0, 10)) + '. Mercatto Gestão · Inteligência para decisões em energia.</span>';
+  }
+
+  // 1 · barras por resolução: TUSD (cheia), TE (neutra) e IPCA (tracejada)
+  function grafico1() {
+    const P = POSTOS[posto1], svg = $('#ch-1'); svg.textContent = '';
+    const W = 920, ml = 56, mr = 12, mt = 26, yb = 300;
+    const ps = dist.passos, a = ps[0];
+    const grupos = ps.map((p, i) => ({
+      p, i, t: P.tusd(p.v) / P.tusd(a.v) - 1, e: P.te(a.v) > 0 ? P.te(p.v) / P.te(a.v) - 1 : null, ip: i === 0 ? 0 : ipca.ate(p.d),
+      rj: i === 0 ? null : P.tusd(p.v) / P.tusd(ps[i - 1].v) - 1,
+    }));
+    const vals = grupos.flatMap((g) => [g.t, g.e, g.ip]).filter((x) => x != null);
+    const sc = escala(Math.min(0, ...vals), Math.max(0, ...vals), 5);
+    const Y = (v) => mt + (sc.hi - v) / (sc.hi - sc.lo) * (yb - mt);
+    for (let v = sc.lo; v <= sc.hi + 1e-9; v += sc.p) {
+      svg.append(el('line', { x1: ml, x2: W - mr, y1: Y(v), y2: Y(v), stroke: cor('--rule') }));
+      svg.append(el('text', { x: ml - 8, y: Y(v) + 4, 'text-anchor': 'end', 'font-size': 11, fill: cor('--ink-3') }, pct(v, 0)));
+    }
+    svg.append(el('line', { x1: ml, x2: W - mr, y1: Y(0), y2: Y(0), stroke: cor('--axis') }));
+    const gw = (W - ml - mr) / grupos.length, temTe = grupos.some((g) => g.e != null);
+    const bw = Math.min(40, gw * (temTe ? 0.24 : 0.32)), gap = 4;
+    const nb = temTe ? 3 : 2, larg = nb * bw + (nb - 1) * gap;
+    const fs = temTe ? 10.5 : 11.5, dec = temTe || grupos.length > 6 ? 0 : 1;
+    grupos.forEach((g) => {
+      const cx = ml + gw * g.i + gw / 2;
+      const rot = g.i === 0 ? mesAno(D.inicio) : mesAno(g.p.vig);
+      svg.append(el('text', { x: cx, y: yb + 22, 'text-anchor': 'middle', 'font-size': 11, fill: cor('--ink-2') }, rot));
+      if (g.i === 0) {
+        svg.append(el('text', { x: cx, y: Y(0) - 8, 'text-anchor': 'middle', 'font-size': 11, fill: cor('--ink-3') }, 'base = 0'));
+        svg.append(el('text', { x: cx, y: yb + 40, 'text-anchor': 'middle', 'font-size': 10.5, fill: cor('--ink-3') }, 'vigente no início'));
+        return;
+      }
+      let x = cx - larg / 2;
+      const barra = (v, tipo, rotulo) => {
+        const y0 = Y(0), y1 = Y(v), top = Math.min(y0, y1), h = Math.max(1, Math.abs(y1 - y0));
+        const at = tipo === 'ipca' ? { x: x + 0.8, y: top, width: bw - 1.6, height: h, fill: 'none', stroke: cor('--ipca'), 'stroke-width': 1.6, 'stroke-dasharray': '4 3' }
+          : { x, y: top, width: bw, height: h, fill: cor(tipo === 'tusd' ? '--tusd' : '--te') };
+        svg.append(tip(el('rect', at), rotulo + ' acumulada até ' + mesAno(g.p.vig) + ': ' + pct(v)));
+        const ty = v >= 0 ? top - 6 : top + h + 14;
+        svg.append(el('text', { x: x + bw / 2, y: ty, 'text-anchor': 'middle', 'font-size': tipo === 'tusd' ? fs + 1 : fs, 'font-weight': tipo === 'tusd' ? 700 : 500,
+          fill: cor(tipo === 'tusd' ? '--tusd' : '--ink-2') }, pct(v, dec)));
+        x += bw + gap;
+      };
+      barra(g.t, 'tusd', 'TUSD');
+      if (temTe) { if (g.e != null) barra(g.e, 'te', 'TE'); else x += bw + gap; }
+      barra(g.ip, 'ipca', 'IPCA');
+      svg.append(el('text', { x: cx, y: yb + 40, 'text-anchor': 'middle', 'font-size': 10.5, fill: cor('--tusd'), 'font-weight': 600 }, 'TUSD ' + pct(g.rj)));
+    });
+    $('#u-1').textContent = P.nome.toLowerCase() + ' · acumulado desde ' + mesAno(D.inicio);
+    const g = grupos[grupos.length - 1];
+    $('#cap-1').innerHTML = 'Barra cheia = TUSD e TE acumuladas; tracejada = IPCA acumulado. Embaixo, o reajuste da TUSD em cada resolução. ' +
+      'Na ' + esc(P.nome.toLowerCase()) + ', a TUSD acumula <b>' + pct(g.t) + '</b>' + (g.e != null ? ', a TE ' + pct(g.e) : '') + ' e o IPCA ' + pct(ipca.total) + '.';
+  }
+
+  // 2 · barras horizontais com a linha do IPCA
+  function grafico2() {
+    const svg = $('#ch-2'); svg.textContent = '';
+    const W = 920, lx = 236, rx = 840, top = 40, rh = 54, bh = 32;
+    const rows = ITENS.map((it) => ({ it, v: variacao(dist, it.f) })).filter((r) => r.v != null && isFinite(r.v));
+    const H = top + rows.length * rh + 26;
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    const vs = rows.map((r) => r.v).concat([ipca.total, 0]);
+    const sc = escala(Math.min(0, ...vs), Math.max(...vs) * 1.08, 4);
+    const X = (v) => lx + (v - sc.lo) / (sc.hi - sc.lo) * (rx - lx);
+    for (let v = sc.lo; v <= sc.hi + 1e-9; v += sc.p) {
+      svg.append(el('line', { x1: X(v), x2: X(v), y1: top - 6, y2: H - 22, stroke: cor('--rule') }));
+      svg.append(el('text', { x: X(v), y: H - 6, 'text-anchor': 'middle', 'font-size': 11, fill: cor('--ink-3') }, pct(v, 0)));
+    }
+    svg.append(el('line', { x1: X(0), x2: X(0), y1: top - 6, y2: H - 22, stroke: cor('--axis') }));
+    rows.forEach((r, i) => {
+      const y = top + i * rh + (rh - bh) / 2, tusd = r.it.tipo === 'tusd';
+      const x0 = X(Math.min(0, r.v)), x1 = X(Math.max(0, r.v));
+      svg.append(el('text', { x: lx - 14, y: y + bh / 2 + 4, 'text-anchor': 'end', 'font-size': 13, 'font-weight': tusd ? 600 : 400, fill: cor(tusd ? '--ink' : '--ink-2'),
+        style: 'font-family:var(--f-body)' }, r.it.nome + ' (' + r.it.det + ')'));
+      svg.append(tip(el('rect', { x: x0, y, width: Math.max(1, x1 - x0), height: bh, rx: 2, fill: cor(tusd ? '--tusd' : '--te') }),
+        r.it.nome + ': ' + pct(r.v) + ' (R$ ' + num(r.it.f(ini().v), r.it.dec) + ' → R$ ' + num(r.it.f(fim().v), r.it.dec) + ')'));
+      let lxv = r.v >= 0 ? x1 + 8 : x0 - 8;
+      const xIp = X(ipca.total);
+      if (r.v >= 0 && lxv < xIp + 6 && lxv + 58 > xIp) lxv = xIp + 7;   // não escreve em cima da linha do IPCA
+      svg.append(el('text', { x: lxv, y: y + bh / 2 + 5, 'text-anchor': r.v >= 0 ? 'start' : 'end', 'font-size': 13.5, 'font-weight': tusd ? 700 : 500,
+        fill: cor(tusd ? '--tusd' : '--ink-2') }, pct(r.v)));
+    });
+    const xi = X(ipca.total);
+    svg.append(el('line', { x1: xi, x2: xi, y1: top - 10, y2: H - 22, stroke: cor('--ipca'), 'stroke-width': 2, 'stroke-dasharray': '5 4' }));
+    svg.append(el('text', { x: xi, y: top - 16, 'text-anchor': 'middle', 'font-size': 11.5, fill: cor('--ink-2'), style: 'font-family:var(--f-body)' }, 'IPCA no mesmo período: ' + pct(ipca.total)));
+  }
+
+  // 3 · composição TE x TUSD na energia fora ponta
+  function grafico3() {
+    const svg = $('#ch-3'); svg.textContent = '';
+    const lx = 90, rx = 900, linhas = [[mesAno(D.inicio), ini().v], [mesAno(D.fim), fim().v]];
+    linhas.forEach(([rot, v], i) => {
+      const y = 16 + i * 78, te = v[5], tu = v[4], t = te + tu, wte = (rx - lx) * te / t;
+      svg.append(el('text', { x: lx - 14, y: y + 30, 'text-anchor': 'end', 'font-size': 13, fill: cor('--ink'), style: 'font-family:var(--f-body)' }, rot));
+      svg.append(el('rect', { x: lx, y, width: wte, height: 50, fill: cor('--te') }));
+      svg.append(el('rect', { x: lx + wte, y, width: rx - lx - wte, height: 50, fill: cor('--tusd') }));
+      svg.append(el('text', { x: lx + 12, y: y + 30, 'font-size': 13, 'font-weight': 600, fill: cor('--on-te'), style: 'font-family:var(--f-body)' }, 'TE ' + num(te / t * 100) + '% · R$ ' + num(te)));
+      svg.append(el('text', { x: rx - 12, y: y + 30, 'text-anchor': 'end', 'font-size': 13, 'font-weight': 700, fill: cor('--on-tusd'), style: 'font-family:var(--f-body)' }, 'TUSD ' + num(tu / t * 100) + '% · R$ ' + num(tu)));
+    });
+  }
+
+  // 4 · colunas empilhadas ano a ano (TE embaixo, TUSD em cima)
+  function grafico4() {
+    const svg = $('#ch-4'); svg.textContent = '';
+    const W = 920, ml = 56, mr = 12, mt = 30, yb = 310;
+    const vals = aniversarios().map((s) => { const p = vigenteEm(dist, s); return { s, te: p.v[5], tu: p.v[4] }; });
+    const sc = escala(0, Math.max(...vals.map((v) => v.te + v.tu)) * 1.08, 5);
+    const Y = (v) => yb - v / sc.hi * (yb - mt);
+    for (let v = 0; v <= sc.hi + 1e-9; v += sc.p) {
+      svg.append(el('line', { x1: ml, x2: W - mr, y1: Y(v), y2: Y(v), stroke: cor('--rule') }));
+      svg.append(el('text', { x: ml - 8, y: Y(v) + 4, 'text-anchor': 'end', 'font-size': 11, fill: cor('--ink-3') }, num(v)));
+    }
+    const gw = (W - ml - mr) / vals.length, bw = Math.min(64, gw * 0.56);
+    vals.forEach((v, i) => {
+      const cx = ml + gw * i + gw / 2, x = cx - bw / 2, yTe = Y(v.te), yTot = Y(v.te + v.tu);
+      svg.append(tip(el('rect', { x, y: yTe, width: bw, height: yb - yTe, fill: cor('--te') }), 'TE ' + mesAno(v.s) + ': R$ ' + num(v.te) + '/MWh'));
+      svg.append(tip(el('rect', { x, y: yTot, width: bw, height: Math.max(1, yTe - yTot), fill: cor('--tusd') }), 'TUSD ' + mesAno(v.s) + ': R$ ' + num(v.tu) + '/MWh'));
+      if (yb - yTe > 20) svg.append(el('text', { x: cx, y: (yTe + yb) / 2 + 4, 'text-anchor': 'middle', 'font-size': 11.5, 'font-weight': 600, fill: cor('--on-te') }, num(v.te)));
+      if (yTe - yTot > 18) svg.append(el('text', { x: cx, y: (yTot + yTe) / 2 + 4, 'text-anchor': 'middle', 'font-size': 12, 'font-weight': 700, fill: cor('--on-tusd') }, num(v.tu)));
+      svg.append(el('text', { x: cx, y: yTot - 8, 'text-anchor': 'middle', 'font-size': 13, 'font-weight': 600, fill: cor('--ink'), style: 'font-family:var(--f-display)' }, num(v.te + v.tu)));
+      svg.append(el('text', { x: cx, y: yb + 20, 'text-anchor': 'middle', 'font-size': 11, fill: cor('--ink-2') }, mesAno(v.s)));
+      if (i > 0) svg.append(el('text', { x: cx, y: yb + 38, 'text-anchor': 'middle', 'font-size': 10.5, 'font-weight': 600, fill: cor('--tusd') }, 'TUSD ' + pct(v.tu / vals[i - 1].tu - 1, 0)));
+    });
+  }
+
+  function tabela() {
+    const cols = [ITENS[0], ITENS[1], ITENS[2], ITENS[3]];
+    const ps = dist.passos, a = ps[0], b = ps[ps.length - 1];
+    const cl = (v) => (v < -0.0005 ? ' neg' : '');
+    const h = ['<thead><tr><th>Vigência</th><th>Resolução</th>' + cols.map((c) => '<th class="' + c.tipo + '">' + esc(c.nome) + '</th>').join('') + '</tr></thead><tbody>'];
+    h.push('<tr class="base"><td>' + dataBr(a.vig) + '</td><td class="reh">' + esc(a.reh) + ' · vigente no início</td>' +
+      cols.map((c) => '<td class="' + (c.tipo === 'tusd' ? 'tusd' : '') + '">R$ ' + num(c.f(a.v), c.dec) + '</td>').join('') + '</tr>');
+    for (let i = 1; i < ps.length; i++) {
+      h.push('<tr><td>' + dataBr(ps[i].vig) + '</td><td class="reh">' + esc(ps[i].reh) + '</td>' + cols.map((c) => {
+        const v = c.f(ps[i].v) / c.f(ps[i - 1].v) - 1; return '<td class="' + (c.tipo === 'tusd' ? 'tusd' : '') + cl(v) + '">' + pct(v) + '</td>';
+      }).join('') + '</tr>');
+    }
+    h.push('<tr><td>Acumulado</td><td class="reh">' + mesAno(D.inicio) + ' a ' + mesAno(D.fim) + '</td>' + cols.map((c) => {
+      const v = c.f(b.v) / c.f(a.v) - 1; return '<td class="' + (c.tipo === 'tusd' ? 'tusd' : '') + cl(v) + '">' + pct(v) + '</td>';
+    }).join('') + '</tr></tbody>');
+    $('#tb').innerHTML = h.join('');
+    $('#cap-5').textContent = 'Inclui reajustes anuais, revisões e correções publicadas pela ANEEL. Última: ' + b.reh + ', vigente desde ' + dataBr(b.vig) + '.';
+  }
+
+  function listaComparacao() {
+    const m = ITENS.find((x) => x.k === $('#metrica').value) || ITENS[0];
+    const e = $('#escopo').value;
+    let base = D.distribuidoras.filter((d) => d.completa);
+    if (e === 'regiao') base = base.filter((d) => d.regiao === dist.regiao);
+    if (e === 'principais') base = base.filter((d) => d.grupo === 'Principais' || d === dist);
+    const itens = base.map((d) => ({ d, v: variacao(d, m.f) })).filter((x) => x.v != null && isFinite(x.v)).sort((x, y) => y.v - x.v);
+    return { m, itens, nomeEscopo: e === 'regiao' ? 'região ' + dist.regiao : e === 'brasil' ? 'Brasil' : 'principais distribuidoras' };
+  }
+  function comparacao() {
+    const { m, itens, nomeEscopo } = listaComparacao();
+    const pos = itens.findIndex((x) => x.d === dist) + 1;
+    $('#u-6').textContent = m.nome + ' · ' + mesAno(D.inicio) + ' a ' + mesAno(D.fim);
+    $('#cmp-pos').innerHTML = pos ? '<b>' + esc(dist.nome) + '</b> teve a ' + pos + 'ª maior alta de ' + esc(m.nome) + ' entre ' + itens.length + ' distribuidoras (' + esc(nomeEscopo) + ').'
+      : esc(dist.nome) + ' não tem os ' + D.anos + ' anos completos de tarifa para comparar.';
+    const vs = itens.map((x) => x.v).concat([ipca.total, 0]);
+    const lo = Math.min(...vs), hi = Math.max(...vs), P = (v) => (v - lo) / (hi - lo) * 100;
+    const top = 15;
+    $('#cmp-list').innerHTML = itens.map((x, i) => {
+      const a = P(Math.min(0, x.v)), b = P(Math.max(0, x.v));
+      const cls = 'cmp-row' + (x.d === dist ? ' sel' : '') + (i >= top && x.d !== dist ? ' extra' : '');
+      return '<div class="' + cls + '"><span class="nm" title="' + esc(x.d.nome) + '">' + esc(x.d.nome) + ' · ' + (i + 1) + 'º</span>' +
+        '<span class="cmp-track"><span class="b" style="left:' + a + '%;width:' + Math.max(0.6, b - a) + '%"></span>' +
+        (lo < 0 ? '<span class="z" style="left:' + P(0) + '%"></span>' : '') + '<span class="ip" style="left:' + P(ipca.total) + '%"></span></span>' +
+        '<span class="vl">' + pct(x.v, 0) + '</span></div>';
+    }).join('');
+    const extra = itens.length - top - (pos > top ? 1 : 0);
+    $('#cmp-mais').textContent = extra > 0 ? 'E mais ' + extra + ' distribuidoras na página interativa.' : '';
+    const sel = $('#cmp-list .sel');
+    if (sel && !document.body.classList.contains('exportando')) { const l = $('#cmp-list'); l.scrollTop = Math.max(0, sel.offsetTop - l.clientHeight / 2); }
+  }
+
+  // ---------- Seleção ----------
+  function escolher(nome, porHash) {
+    const d = D.distribuidoras.find((x) => x.nome === nome) || D.distribuidoras.find((x) => slug(x.nome) === nome);
+    if (!d) return;
+    dist = d; $('#dist').value = d.nome;
+    if (!porHash) { try { history.replaceState(null, '', '#' + slug(d.nome)); } catch (e) { location.hash = slug(d.nome); } }
+    render();
+  }
+  function montar() {
+    const sel = $('#dist');
+    for (const r of ['Sul', 'Sudeste', 'Centro-Oeste', 'Nordeste', 'Norte', 'Sem região']) {
+      const ds = D.distribuidoras.filter((d) => d.regiao === r).sort((a, b) => (a.grupo === b.grupo ? a.nome.localeCompare(b.nome, 'pt') : a.grupo === 'Principais' ? -1 : 1));
+      if (!ds.length) continue;
+      const og = document.createElement('optgroup'); og.label = r;
+      for (const d of ds) { const o = document.createElement('option'); o.value = d.nome; o.textContent = d.nome + (d.uf ? ' (' + d.uf + ')' : ''); og.append(o); }
+      sel.append(og);
+    }
+    const ms = $('#metrica');
+    for (const m of ITENS) { const o = document.createElement('option'); o.value = m.k; o.textContent = m.nome; ms.append(o); }
+    sel.addEventListener('change', () => escolher(sel.value));
+    ms.addEventListener('change', comparacao);
+    $('#escopo').addEventListener('change', comparacao);
+    for (const b of document.querySelectorAll('#seg-1 button')) b.addEventListener('click', () => {
+      posto1 = b.dataset.k;
+      for (const o of document.querySelectorAll('#seg-1 button')) o.setAttribute('aria-pressed', String(o === b));
+      grafico1();
+    });
+    window.addEventListener('hashchange', () => escolher(decodeURIComponent(location.hash.slice(1)), true));
+  }
+  try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => render()); } catch (e) {}
+  new MutationObserver(() => render()).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+  // ---------- Exportação ----------
+  const libs = {};
+  const carregar = (src) => libs[src] || (libs[src] = new Promise((ok, falha) => {
+    const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => falha(new Error('não consegui carregar a biblioteca')); document.head.append(s);
+  }));
+  async function imagem(c) { const b = await (await fetch(c)).blob(); return await new Promise((ok) => { const r = new FileReader(); r.onload = () => ok(r.result); r.readAsDataURL(b); }); }
+  async function salvar(nome, blob) {
+    try {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = nome; a.style.display = 'none';
+      document.body.append(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      status('Arquivo pronto: ' + nome);
+    } catch (e) {
+      status('Não foi possível baixar o arquivo (' + e.message + ').');
+    }
+  }
+  const nomeArquivo = (ext) => 'Reajustes ' + dist.nome.replace(/[\\/:*?"<>|]/g, '-') + ' - ' + MESES[+D.fim.slice(5, 7) - 1] + '-' + D.fim.slice(0, 4) + '.' + ext;
+  // Espera o navegador redesenhar (com limite de tempo, porque abas em segundo plano não desenham)
+  const quadro = () => new Promise((ok) => { setTimeout(ok, 400); requestAnimationFrame(() => requestAnimationFrame(ok)); });
+
+  async function exportarPDF() {
+    const bt = $('#b-pdf'); bt.disabled = true; status('Gerando o PDF…');
+    const raiz = document.documentElement, antes = raiz.getAttribute('data-theme');
+    try {
+      await Promise.all([carregar('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'), carregar('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js')]);
+      raiz.setAttribute('data-theme', 'light'); document.body.classList.add('exportando'); render();
+      await document.fonts.ready; await quadro();
+      const pdf = new window.jspdf.jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const PW = 210, PH = 297, M = 12, w = PW - 2 * M, fundo = cor('--ground');
+      const pinta = () => { pdf.setFillColor(fundo); pdf.rect(0, 0, PW, PH, 'F'); };
+      let y = M; pinta();
+      for (const bloco of document.querySelectorAll('[data-pdf]')) {
+        const c = await window.html2canvas(bloco, { scale: 2, backgroundColor: fundo, useCORS: true, logging: false, windowWidth: 1100 });
+        let h = c.height * w / c.width, ww = w;
+        if (h > PH - 2 * M) { ww = w * (PH - 2 * M) / h; h = PH - 2 * M; }
+        if (y + h > PH - M && y > M) { pdf.addPage(); pinta(); y = M; }
+        pdf.addImage(c.toDataURL('image/jpeg', 0.92), 'JPEG', M + (w - ww) / 2, y, ww, h);
+        y += h + 5;
+      }
+      const n = pdf.getNumberOfPages();
+      for (let i = 1; i <= n; i++) { pdf.setPage(i); pdf.setFontSize(8); pdf.setTextColor('#918ca6'); pdf.text('Mercatto Gestão · ' + i + '/' + n, PW - M, PH - 6, { align: 'right' }); }
+      await salvar(nomeArquivo('pdf'), pdf.output('blob'));
+    } catch (e) { status('Erro ao gerar o PDF: ' + e.message); }
+    finally {
+      document.body.classList.remove('exportando');
+      if (antes == null) raiz.removeAttribute('data-theme'); else raiz.setAttribute('data-theme', antes);
+      render(); bt.disabled = false;
+    }
+  }
+
+  async function exportarPPT() {
+    const bt = $('#b-ppt'); bt.disabled = true; status('Gerando o PowerPoint…');
+    try {
+      await carregar('https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js');
+      const [logo, logoBranco, capa, fundo] = await Promise.all(['assets/logo.png', 'assets/logo-branco.png', 'assets/capa.jpg', 'assets/fundo.jpg'].map(imagem));
+      const d64 = (u) => u.replace(/^data:/, '');
+      const NAVY = '3C4274', TXT = '002060', SUB = '5D5878', TUSD = 'C0603F', TE = 'BDB6D6', IPCA = '8C87A6', F = 'Open Sans';
+      const PCT = '+0%;-0%;0%', PCT_SEM_ZERO = '+0%;-0%;;';
+      const pptx = new window.PptxGenJS();
+      pptx.layout = 'LAYOUT_WIDE'; pptx.author = 'Mercatto Gestão'; pptx.company = 'Mercatto Gestão'; pptx.title = 'Reajustes tarifários ' + dist.nome;
+      pptx.defineSlideMaster({
+        title: 'M', background: { data: d64(fundo) },
+        objects: [
+          { image: { x: 10.45, y: 0.34, w: 2.4, h: 0.55, data: d64(logo) } },
+          { line: { x: 0.9, y: 6.92, w: 11.55, h: 0, line: { color: NAVY, width: 1 } } },
+          { text: { text: 'Fonte: ANEEL (tarifas de aplicação, A4 verde, sem impostos, base de ' + dataBr(D.baseAneel) + ') e IBGE (IPCA ' + ipca.rotulo + ').',
+            options: { x: 0.9, y: 6.95, w: 10.6, h: 0.32, fontFace: F, fontSize: 9, color: TXT } } },
+        ],
+        slideNumber: { x: 12.35, y: 6.97, w: 0.5, h: 0.3, fontFace: F, fontSize: 9, color: NAVY },
+      });
+      const titulo = (s, t, sub) => {
+        s.addText(t, { x: 0.9, y: 0.32, w: 9.4, h: 0.85, fontFace: F, bold: true, fontSize: 30, color: NAVY, valign: 'middle', fit: 'shrink' });
+        if (sub) s.addText(sub, { x: 0.9, y: 1.12, w: 9.4, h: 0.42, fontFace: F, fontSize: 14, color: SUB });
+      };
+      const eixo = { valAxisLabelFontSize: 11, valAxisLabelColor: SUB, catAxisLabelFontSize: 11, catAxisLabelColor: SUB, valGridLine: { color: 'DDD6D2', size: 0.5 },
+        legendFontFace: F, legendFontSize: 12, legendColor: TXT, showLegend: true, legendPos: 'b' };
+      const a = ini(), b = fim(), periodo = mesAno(D.inicio) + ' a ' + mesAno(D.fim);
+      const vT = b.v[4] / a.v[4] - 1, vE = b.v[5] / a.v[5] - 1;
+
+      // Capa
+      let s = pptx.addSlide(); s.background = { data: d64(capa) };
+      s.addImage({ data: d64(logoBranco), x: 5.12, y: 0.95, w: 3.1, h: 1.65 });
+      s.addText('Inteligência para decisões em energia.', { x: 1.5, y: 2.9, w: 10.33, h: 0.6, fontFace: F, bold: true, italic: true, fontSize: 26, color: 'FFFFFF', align: 'center' });
+      s.addText('Reajustes tarifários · ' + dist.nome, { x: 1.5, y: 3.75, w: 10.33, h: 0.65, fontFace: F, fontSize: 30, color: 'FFFFFF', align: 'center', fit: 'shrink' });
+      s.addText('TUSD e TE do mercado cativo · A4 verde · ' + periodo, { x: 1.5, y: 4.45, w: 10.33, h: 0.45, fontFace: F, fontSize: 18, color: 'FFFFFF', align: 'center' });
+      const mes = MESES_LONGOS[+D.fim.slice(5, 7) - 1];
+      s.addText(mes.charAt(0).toUpperCase() + mes.slice(1) + '/' + D.fim.slice(0, 4), { x: 1.5, y: 5.0, w: 10.33, h: 0.4, fontFace: F, fontSize: 16, color: 'E8B4A2', align: 'center' });
+
+      // Resumo
+      s = pptx.addSlide({ masterName: 'M' });
+      titulo(s, dist.nome + ': a TUSD ' + (vT >= 0 ? 'subiu ' : 'caiu ') + abs0(vT) + ' em ' + D.anos + ' anos', 'Tarifa vigente em ' + dataBr(D.inicio) + ' × vigente em ' + dataBr(D.fim) + ' · sem impostos');
+      const cards = [
+        { rot: 'TUSD fora ponta', v: vT, de: 'R$ ' + num(a.v[4]) + ' → R$ ' + num(b.v[4]) + ' /MWh', tusd: true },
+        { rot: 'TUSD ponta', v: b.v[2] / a.v[2] - 1, de: 'R$ ' + num(a.v[2]) + ' → R$ ' + num(b.v[2]) + ' /MWh', tusd: true },
+        { rot: 'Demanda (TUSD)', v: (b.v[0] + b.v[1]) / (a.v[0] + a.v[1]) - 1, de: 'R$ ' + num(a.v[0] + a.v[1], 2) + ' → R$ ' + num(b.v[0] + b.v[1], 2) + ' /kW', tusd: true },
+        { rot: 'TE fora ponta (energia)', v: vE, de: 'R$ ' + num(a.v[5]) + ' → R$ ' + num(b.v[5]) + ' /MWh', tusd: false },
+      ];
+      cards.forEach((c, i) => {
+        const x = 0.9 + i * 2.95;
+        s.addShape(pptx.ShapeType.rect, { x, y: 1.85, w: 2.75, h: 2.35, fill: { color: 'FFFFFF' }, line: { color: 'E2DAD6', width: 0.75 } });
+        if (c.tusd) s.addShape(pptx.ShapeType.rect, { x, y: 1.85, w: 2.75, h: 0.07, fill: { color: TUSD }, line: { color: TUSD, width: 0 } });
+        s.addText(c.rot, { x: x + 0.2, y: 2.0, w: 2.4, h: 0.4, fontFace: F, fontSize: 14, color: SUB });
+        s.addText(pct(c.v, 0), { x: x + 0.2, y: 2.4, w: 2.4, h: 0.8, fontFace: F, bold: true, fontSize: 38, color: c.tusd ? TUSD : '8C87A6' });
+        s.addText(c.de, { x: x + 0.2, y: 3.22, w: 2.4, h: 0.35, fontFace: F, fontSize: 11, color: SUB });
+        s.addText(frase(c.v), { x: x + 0.2, y: 3.6, w: 2.4, h: 0.38, fontFace: F, bold: true, fontSize: 12, color: real(c.v) > 0 ? 'B9472F' : '3F7D68' });
+      });
+      s.addText([
+        { text: 'IPCA no mesmo período: ' + pct(ipca.total) + ' (' + ipca.rotulo + ').', options: { bullet: true, breakLine: true } },
+        { text: 'Na energia fora ponta, a rede (TUSD) subiu ' + pct(vT, 0) + ' e a energia (TE) ' + pct(vE, 0) + '. Hoje ' + num(b.v[4] / (b.v[4] + b.v[5]) * 100) + '% desse preço é rede.', options: { bullet: true, breakLine: true } },
+        { text: 'No mercado livre a TE é negociada; a TUSD continua sendo paga à distribuidora.', options: { bullet: true, breakLine: true } },
+        { text: 'Última resolução: ' + b.reh + ', vigente desde ' + dataBr(b.vig) + '.', options: { bullet: true } },
+      ], { x: 0.9, y: 4.5, w: 11.55, h: 2.2, fontFace: F, fontSize: 15, color: TXT, paraSpaceAfter: 6, valign: 'top' });
+
+      // TUSD x IPCA reajuste a reajuste
+      s = pptx.addSlide({ masterName: 'M' });
+      titulo(s, 'TUSD × IPCA, reajuste a reajuste', dist.nome + ' · energia fora ponta · acumulado desde ' + mesAno(D.inicio));
+      const ps = dist.passos.slice(1);
+      const rot = ps.map((p) => mesAno(p.vig));
+      s.addChart(pptx.ChartType.bar, [
+        { name: 'TUSD fora ponta', labels: rot, values: ps.map((p) => p.v[4] / a.v[4] - 1) },
+        { name: 'TE fora ponta', labels: rot, values: ps.map((p) => p.v[5] / a.v[5] - 1) },
+        { name: 'IPCA', labels: rot, values: ps.map((p) => ipca.ate(p.d)) },
+      ], { x: 0.9, y: 1.65, w: 11.55, h: 5.15, barDir: 'col', barGrouping: 'clustered', barGapWidthPct: 60, chartColors: [TUSD, TE, IPCA],
+        showValue: true, dataLabelFormatCode: PCT, dataLabelFontSize: 10, dataLabelColor: SUB, dataLabelPosition: 'outEnd', valAxisLabelFormatCode: '0%', ...eixo });
+
+      // O que subiu em 5 anos
+      s = pptx.addSlide({ masterName: 'M' });
+      titulo(s, 'O que subiu em ' + D.anos + ' anos', dist.nome + ' · variação acumulada (' + periodo + ') · IPCA ' + pct(ipca.total));
+      const its = ITENS.map((it) => ({ it, v: variacao(dist, it.f) })).filter((r) => r.v != null).reverse();
+      s.addChart(pptx.ChartType.bar, [
+        { name: 'TUSD (rede)', labels: its.map((r) => r.it.nome), values: its.map((r) => (r.it.tipo === 'tusd' ? r.v : 0)) },
+        { name: 'TE (energia)', labels: its.map((r) => r.it.nome), values: its.map((r) => (r.it.tipo === 'te' ? r.v : 0)) },
+      ], { x: 0.9, y: 1.65, w: 8.2, h: 5.15, barDir: 'bar', barGrouping: 'stacked', barGapWidthPct: 45, chartColors: [TUSD, TE],
+        showValue: true, dataLabelFormatCode: PCT_SEM_ZERO, dataLabelFontSize: 13, dataLabelColor: TXT, valAxisLabelFormatCode: '0%', ...eixo });
+      s.addText([
+        { text: pct(ipca.total), options: { fontSize: 34, bold: true, color: IPCA, breakLine: true } },
+        { text: 'IPCA no mesmo período', options: { fontSize: 13, color: SUB, breakLine: true } },
+        { text: ' ', options: { fontSize: 10, breakLine: true } },
+        { text: pct(vT, 0), options: { fontSize: 34, bold: true, color: TUSD, breakLine: true } },
+        { text: 'TUSD fora ponta · ' + frase(vT), options: { fontSize: 13, color: SUB, breakLine: true } },
+        { text: ' ', options: { fontSize: 10, breakLine: true } },
+        { text: pct(vE, 0), options: { fontSize: 34, bold: true, color: '8C87A6', breakLine: true } },
+        { text: 'TE fora ponta · ' + frase(vE), options: { fontSize: 13, color: SUB } },
+      ], { x: 9.35, y: 1.8, w: 3.1, h: 4.9, fontFace: F, valign: 'top' });
+
+      // Quem pesa mais
+      s = pptx.addSlide({ masterName: 'M' });
+      titulo(s, 'Quem pesa mais na energia fora ponta', dist.nome + ' · R$/MWh, sem impostos');
+      s.addChart(pptx.ChartType.bar, [
+        { name: 'TE (energia)', labels: [mesAno(D.inicio), mesAno(D.fim)], values: [a.v[5], b.v[5]] },
+        { name: 'TUSD (rede)', labels: [mesAno(D.inicio), mesAno(D.fim)], values: [a.v[4], b.v[4]] },
+      ], { x: 0.9, y: 1.75, w: 6.9, h: 4.95, barDir: 'col', barGrouping: 'stacked', chartColors: [TE, TUSD], barGapWidthPct: 70,
+        showValue: true, dataLabelFormatCode: '#,##0', dataLabelColor: TXT, dataLabelFontSize: 14, valAxisHidden: true, ...eixo, valGridLine: { style: 'none' } });
+      const pa = a.v[4] / (a.v[4] + a.v[5]), pb = b.v[4] / (b.v[4] + b.v[5]);
+      s.addText([
+        { text: num(pa * 100) + '% → ' + num(pb * 100) + '%', options: { fontSize: 34, bold: true, color: TUSD, breakLine: true } },
+        { text: 'parcela da rede (TUSD) no preço da energia fora ponta', options: { fontSize: 13, color: SUB, breakLine: true } },
+        { text: ' ', options: { fontSize: 10, breakLine: true } },
+        { text: pct(vT, 0) + ' × ' + pct(vE, 0), options: { fontSize: 34, bold: true, color: TXT, breakLine: true } },
+        { text: 'TUSD × TE fora ponta em ' + D.anos + ' anos', options: { fontSize: 13, color: SUB, breakLine: true } },
+        { text: ' ', options: { fontSize: 10, breakLine: true } },
+        { text: 'A TE pode ser negociada no mercado livre. A TUSD continua sendo paga à distribuidora.', options: { fontSize: 12, italic: true, color: SUB } },
+      ], { x: 8.2, y: 1.8, w: 4.25, h: 4.9, fontFace: F, valign: 'top' });
+
+      // Ano a ano
+      s = pptx.addSlide({ masterName: 'M' });
+      titulo(s, 'Ano a ano: energia fora ponta', dist.nome + ' · R$/MWh na data de cada aniversário da janela');
+      const ds = aniversarios(), vv = ds.map((x) => vigenteEm(dist, x));
+      s.addChart(pptx.ChartType.bar, [
+        { name: 'TE (energia)', labels: ds.map(mesAno), values: vv.map((p) => p.v[5]) },
+        { name: 'TUSD (rede)', labels: ds.map(mesAno), values: vv.map((p) => p.v[4]) },
+      ], { x: 0.9, y: 1.65, w: 11.55, h: 5.15, barDir: 'col', barGrouping: 'stacked', chartColors: [TE, TUSD], barGapWidthPct: 55,
+        showValue: true, dataLabelFormatCode: '#,##0', dataLabelColor: TXT, dataLabelFontSize: 12, valAxisLabelFormatCode: '#,##0', ...eixo });
+
+      // Resoluções
+      s = pptx.addSlide({ masterName: 'M' });
+      titulo(s, 'Cada resolução no período', dist.nome + ' · variação sobre a tarifa anterior (sem impostos)');
+      const cols = [ITENS[0], ITENS[1], ITENS[2], ITENS[3]];
+      const corV = (v, tusd) => (v < -0.0005 ? '3F7D68' : tusd ? TUSD : SUB);
+      const linhas = [['Vigência', 'Resolução'].concat(cols.map((c) => c.nome)).map((t, i) => ({ text: t, options: { bold: true, color: 'FFFFFF', fill: { color: i >= 2 && i <= 4 ? TUSD : NAVY } } }))];
+      linhas.push([dataBr(a.vig), a.reh + ' (início)'].concat(cols.map((c) => 'R$ ' + num(c.f(a.v), c.dec))).map((t) => ({ text: t, options: { color: SUB } })));
+      dist.passos.forEach((p, i) => {
+        if (!i) return;
+        linhas.push([{ text: dataBr(p.vig) }, { text: p.reh }].concat(cols.map((c) => {
+          const v = c.f(p.v) / c.f(dist.passos[i - 1].v) - 1; return { text: pct(v), options: { color: corV(v, c.tipo === 'tusd'), bold: c.tipo === 'tusd' } };
+        })));
+      });
+      linhas.push([{ text: 'Acumulado', options: { bold: true } }, { text: periodo }].concat(cols.map((c) => {
+        const v = c.f(b.v) / c.f(a.v) - 1; return { text: pct(v), options: { bold: true, color: corV(v, c.tipo === 'tusd'), fill: { color: 'F4EFEC' } } };
+      })));
+      s.addTable(linhas, { x: 0.9, y: 1.75, w: 11.55, colW: [1.55, 2.8, 1.8, 1.8, 1.8, 1.8], fontFace: F, fontSize: 13, color: TXT, align: 'center', valign: 'middle',
+        border: { type: 'solid', color: 'E2DAD6', pt: 0.75 }, fill: { color: 'FFFFFF' }, rowH: 0.42 });
+
+      // Comparação
+      const { m, itens, nomeEscopo } = listaComparacao();
+      const pos = itens.findIndex((x) => x.d === dist) + 1;
+      let most = itens.slice(0, 16);
+      if (pos > 16) most = itens.slice(0, 15).concat([itens[pos - 1]]);
+      most = most.slice().reverse();
+      s = pptx.addSlide({ masterName: 'M' });
+      titulo(s, 'Comparação: ' + m.nome, (pos ? dist.nome + ' teve a ' + pos + 'ª maior alta entre ' + itens.length + ' distribuidoras (' + nomeEscopo + ')' : nomeEscopo) + ' · ' + periodo);
+      const rl = most.map((x) => x.d.nome);
+      s.addChart(pptx.ChartType.bar, [
+        { name: 'Outras distribuidoras', labels: rl, values: most.map((x) => (x.d === dist ? 0 : x.v)) },
+        { name: dist.nome, labels: rl, values: most.map((x) => (x.d === dist ? x.v : 0)) },
+      ], { x: 0.9, y: 1.65, w: 11.55, h: 5.15, barDir: 'bar', barGrouping: 'stacked', chartColors: [TE, TUSD], barGapWidthPct: 35,
+        showValue: true, dataLabelFormatCode: PCT_SEM_ZERO, dataLabelFontSize: 10, dataLabelColor: TXT, valAxisLabelFormatCode: '0%', ...eixo, catAxisLabelFontSize: 10, catAxisLabelColor: TXT, legendFontSize: 11 });
+      s.addText('IPCA no período: ' + pct(ipca.total), { x: 9.0, y: 1.2, w: 3.45, h: 0.35, fontFace: F, fontSize: 12, bold: true, color: SUB, align: 'right' });
+
+      // Encerramento
+      s = pptx.addSlide(); s.background = { data: d64(capa) };
+      s.addImage({ data: d64(logoBranco), x: 5.62, y: 1.45, w: 2.1, h: 1.12 });
+      s.addText('Inteligência para decisões em energia.', { x: 2, y: 2.75, w: 9.33, h: 0.45, fontFace: F, italic: true, fontSize: 18, color: 'FFFFFF', align: 'center' });
+      s.addText([
+        { text: 'www.mercattogestão.com.br', options: { bold: true, color: 'F0A285', fontSize: 20, breakLine: true } },
+        { text: 'comercial@mercattogestão.com.br', options: { color: 'FFFFFF', fontSize: 18, breakLine: true } },
+        { text: 'Fone / Whats: (54) 3214.1120', options: { color: 'FFFFFF', fontSize: 18 } },
+      ], { x: 2, y: 3.45, w: 9.33, h: 1.3, fontFace: F, align: 'center' });
+      s.addText([
+        { text: 'Mercatto Gestão', options: { bold: true, color: 'F0A285', breakLine: true } },
+        { text: 'Rua Ângelo Antonelo, 93 – 10º andar', options: { color: 'FFFFFF', breakLine: true } },
+        { text: 'Centro, Farroupilha – RS, 95170-492', options: { color: 'FFFFFF' } },
+      ], { x: 2, y: 5.35, w: 9.33, h: 0.95, fontFace: F, fontSize: 13, align: 'center' });
+
+      await salvar(nomeArquivo('pptx'), await pptx.write({ outputType: 'blob' }));
+    } catch (e) { status('Erro ao gerar o PowerPoint: ' + e.message); }
+    finally { bt.disabled = false; }
+  }
+  $('#b-pdf').addEventListener('click', exportarPDF);
+  $('#b-ppt').addEventListener('click', exportarPPT);
+
+  // ---------- Início ----------
+  // Os dados vêm embutidos pelo gerador (gerar.ps1); sem eles, tenta o dados.json ao lado.
+  const embutido = (document.getElementById('dados-json') || {}).textContent || '';
+  const dados = embutido.trim().startsWith('{') ? Promise.resolve(JSON.parse(embutido))
+    : fetch('dados.json', { cache: 'no-cache' }).then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
+  dados.then((j) => {
+    D = j; ipca = prepIpca(); montar();
+    $('#conteudo').hidden = false;
+    const h = decodeURIComponent(location.hash.slice(1));
+    escolher(h && D.distribuidoras.some((d) => slug(d.nome) === h) ? h : 'RGE', true);
+  }).catch((e) => {
+    $('#titulo').textContent = 'Não foi possível carregar as tarifas';
+    const p = $('#deck'); p.className = 'erro'; p.textContent = 'Os dados da página não abriram (' + e.message + '). Recarregue em alguns instantes.';
+  });
+})();
+</script>
