@@ -16,8 +16,14 @@
   Distribuidora nova que não estiver no distribuidoras.csv entra com a sigla da ANEEL e a UF
   consultada pelo CNPJ (BrasilAPI).
 
+  De onde vêm os dados:
+    - se existir a pasta dados/ (enviada toda semana pela ponte, ver ponte/ponte.ps1), usa os arquivos
+      dela: aneel_a4verde.csv, ipca.json e coleta.txt. A data da coleta vira a data da página.
+      É assim que roda no GitHub, porque o site da ANEEL não responde a conexões de fora do Brasil;
+    - senão, baixa tudo direto (funciona num computador no Brasil).
+
   Uso:
-    ./gerar.ps1                          # baixa os dados e grava a página em ./_site
+    ./gerar.ps1                          # grava a página em ./_site
     ./gerar.ps1 -Csv C:\temp\tarifas.csv # usa um CSV da ANEEL já baixado
 #>
 param(
@@ -29,6 +35,16 @@ param(
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 $aqui = $PSScriptRoot
+$pastaDados = Join-Path $aqui 'dados'
+$arqIpca = $null
+$coleta = $null
+if (-not $Csv -and (Test-Path -LiteralPath (Join-Path $pastaDados 'aneel_a4verde.csv'))) {
+    $Csv = Join-Path $pastaDados 'aneel_a4verde.csv'
+    $arqIpca = Join-Path $pastaDados 'ipca.json'
+    $coleta = [datetime]::ParseExact((Get-Content -LiteralPath (Join-Path $pastaDados 'coleta.txt') -Raw).Trim(), 'yyyy-MM-dd HH:mm', [Globalization.CultureInfo]::InvariantCulture)
+    if (-not $PSBoundParameters.ContainsKey('Hoje')) { $Hoje = $coleta.Date }
+    Write-Host "Usando os dados enviados pela ponte em $($coleta.ToString('dd/MM/yyyy HH:mm'))."
+}
 if (-not $Saida) { $Saida = Join-Path $aqui '_site' }
 New-Item -ItemType Directory -Force $Saida | Out-Null
 $inv = [Globalization.CultureInfo]::InvariantCulture
@@ -178,7 +194,8 @@ foreach ($g in ($linhas | Group-Object Chave)) {
 Write-Host ("Distribuidoras na página: {0}" -f $saidaDist.Count)
 
 # ---------- IPCA ----------
-$ipca = Tentar { Invoke-RestMethod -TimeoutSec 120 -Uri $urlIpca } 'baixar o IPCA do IBGE'
+$ipca = if ($arqIpca) { [IO.File]::ReadAllText($arqIpca, [Text.Encoding]::UTF8) | ConvertFrom-Json }
+        else { Tentar { Invoke-RestMethod -TimeoutSec 120 -Uri $urlIpca } 'baixar o IPCA do IBGE' }
 $serie = @($ipca | Select-Object -Skip 1 | ForEach-Object { ,@(('{0}-{1}' -f $_.D3C.Substring(0, 4), $_.D3C.Substring(4, 2)), [math]::Round([double]::Parse($_.V, $inv), 2)) })
 
 # ---------- Conferências antes de publicar ----------
@@ -190,7 +207,7 @@ foreach ($ref in @(@('02016440000162', 'RGE'), @('08336783000190', 'Celesc-DIS')
 if ($serie.Count -lt $Anos * 12) { $erros += "IPCA incompleto: $($serie.Count) meses." }
 if ($erros.Count) { throw ("Página NÃO publicada:`n - " + ($erros -join "`n - ")) }
 
-$agora = (Get-Date).ToUniversalTime().AddHours(-3)
+$agora = if ($coleta) { $coleta } else { (Get-Date).ToUniversalTime().AddHours(-3) }
 $dados = [ordered]@{
     gerado = $agora.ToString('yyyy-MM-dd HH:mm')
     baseAneel = $geracao
@@ -215,6 +232,7 @@ Write-Host "Página gravada em $Saida"
 # Resumo (aparece na tela da execução no GitHub)
 $resumo = @("### Página atualizada", '', "- Distribuidoras: $($saidaDist.Count)", "- Base ANEEL de: $geracao",
     "- IPCA até: $($serie[-1][0])", "- Janela: $($inicioJanela.ToString('dd/MM/yyyy')) a $($Hoje.ToString('dd/MM/yyyy'))")
+if ($coleta) { $resumo += "- Dados coletados pela ponte em: $($coleta.ToString('dd/MM/yyyy HH:mm'))" }
 if ($novas.Count) {
     $resumo += '', '**Distribuidoras novas (não estão no distribuidoras.csv; entraram com a sigla da ANEEL):**'
     $resumo += $novas | ForEach-Object { "- $_" }
