@@ -1,31 +1,44 @@
-# Gera a página com os dados mais recentes da ANEEL e do IBGE e publica no GitHub Pages.
-# Roda toda segunda às 7h (Brasília), a cada alteração enviada ao repositório
+# Monta a página e publica no GitHub Pages.
+# Roda sozinha quando a ponte (ponte/ponte.ps1, num computador no Brasil) envia os dados da semana,
 # e quando alguém clicar em "Run workflow" na aba Actions.
-# Se algo falhar (ANEEL fora do ar, dados estranhos), a página antiga continua no ar
-# e o GitHub manda um e-mail avisando.
+# Toda terça confere se a ponte enviou dados novos; se não enviou, a execução falha
+# e o GitHub manda um e-mail avisando. A página antiga continua no ar.
 name: Atualizar página
 
 on:
-  schedule:
-    - cron: '0 10 * * 1'   # 10h UTC = 7h em Brasília
-  workflow_dispatch:
   push:
     branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: '0 15 * * 2'   # terça, 12h em Brasília: só a conferência
 
 permissions:
   contents: read
   pages: write
   id-token: write
-  actions: write   # para manter a rotina semanal ligada (ver o último passo)
 
 concurrency:
   group: pages
   cancel-in-progress: false
 
 jobs:
-  gerar:
+  conferir:
+    if: github.event_name == 'schedule'
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Conferir se a ponte enviou dados novos
+        shell: pwsh
+        run: |
+          $coleta = [datetime]::ParseExact((Get-Content dados/coleta.txt -Raw).Trim(), 'yyyy-MM-dd HH:mm', $null)
+          $dias = ((Get-Date).ToUniversalTime().AddHours(-3) - $coleta).TotalDays
+          if ($dias -gt 8) { throw "A ponte não envia dados desde $($coleta.ToString('dd/MM/yyyy')). Verifique o computador da ponte (ponte.log)." }
+          Write-Host "OK: dados de $($coleta.ToString('dd/MM/yyyy HH:mm'))."
+
+  gerar:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
@@ -48,10 +61,3 @@ jobs:
     steps:
       - id: deploy
         uses: actions/deploy-pages@v4
-
-      # O GitHub desliga rotinas agendadas de repositórios sem alterações há 60 dias.
-      # Este passo religa a rotina a cada execução, para ela nunca parar sozinha.
-      - name: Manter a rotina semanal ligada
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh api --method PUT "repos/${{ github.repository }}/actions/workflows/atualizar.yml/enable"
